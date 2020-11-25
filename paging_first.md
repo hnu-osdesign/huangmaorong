@@ -35,10 +35,10 @@ bitflags! {
         const USER_ACCESSIBLE = 1 << 2;//用户访问权限，如果没有设置，则只能在内核模式下访问此页面
         const WRITE_THROUGH =   1 << 3;
         const NO_CACHE =        1 << 4;//是否禁用缓存
-        const ACCESSED =        1 << 5;//页的活跃程度
-        const DIRTY =           1 << 6;//swap进程可以通过这个位来决定是否选择这个页面进行交换
-        const HUGE_PAGE =       1 << 7;//多级页表的位设置？
-        const GLOBAL =          1 << 8;//全局设定，页面是否在所有地址空间中都可用
+        const ACCESSED =        1 << 5;//该页是否使用过
+        const DIRTY =           1 << 6;//swap进程可以通过这个位来决定是否选择这个页面进行交换
+        const HUGE_PAGE =       1 << 7;//决定是使用4k的页还是4M的大页
+        const GLOBAL =          1 << 8;//全局设定，页面是否在所有地址空间中都可用
         const NO_EXECUTE =      1 << 63;//禁止在此页面执行代码
         /*
         9-11位 OS自由分配使用
@@ -52,7 +52,7 @@ bitflags! {
 
     pub const COUNTER_MASK: u64 = 0x3ff0_0000_0000_0000;
     
-    ADDRESS_MASK可以用来获取地址/检测地址是否超出表示范围；COUNTER_MASK 可用来获取计数值
+    ADDRESS_MASK可以用来获取地址；COUNTER_MASK 可用来获取计数值
 
 
 2. 页表条目方法的定义
@@ -82,7 +82,7 @@ pub fn set_unused(&mut self) {
 ```
 pub fn address(&self) -> PhysicalAddress {
     PhysicalAddress::new(self.0 as usize & ADDRESS_MASK)
-    //和ADDRESS_MASK,相与使地址不超出某个范围
+    //和ADDRESS_MASK相与获取地址
 }
 ```
   - 获取当前页表条目的标志位flags
@@ -110,6 +110,7 @@ pub fn set(&mut self, frame: Frame, flags: EntryFlags) {
     //start_address()获取帧的地址
     //判断地址是否超出范围
     self.0 = (frame.start_address().get() as u64) | flags.bits() | (self.0 & COUNTER_MASK);
+    //将页表条目的信息拼接起来，物理地址（12-51位）|页表条目管理信息(低12位）|计算值（52-62位）
 }
 //获取条目中的第52-61位，用作页表的计数器  10位
 pub fn counter_bits(&self) -> u64 {
@@ -117,7 +118,8 @@ pub fn counter_bits(&self) -> u64 {
 }
 //在条目中设置位52-61，用作页表的计数器
 pub fn set_counter_bits(&mut self, count: u64) {
-    self.0 = (self.0 & !COUNTER_MASK) | (count << 52);//置0或者直接设置为count
+    self.0 = (self.0 & !COUNTER_MASK) | (count << 52);
+    //首先(self.0 & !COUNTER_MASK)将52-62位的数据清0，接着将要设置的值count移动到52-62位后和(self.0 & !COUNTER_MASK)拼接。
 }
 ```
 
