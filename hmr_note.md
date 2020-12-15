@@ -123,13 +123,12 @@ fn eat(food: Option<Cooked>) {
 fn main() {
     let apple = Some(Food::Apple);
     let carrot = Some(Food::Carrot);
-    let potato = None;
+    let potato = None;//马铃薯不存在
 
     let cooked_apple = cook(chop(peel(apple)));
+    //烹饪苹果之前需要先判断是否是水果->是否削皮->是否切块->是否烹饪
     let cooked_carrot = cook(chop(peel(carrot)));
-    // 现在让我们试试更简便的方式 `process()`。
-    // （原文：Let's try the simpler looking `process()` now.）
-    // （翻译疑问：looking 是什么意思呢？望指教。）
+    // 现在让我们试试简便的方式 `process()`。
     let cooked_potato = process(potato);
 
     eat(cooked_apple);
@@ -146,13 +145,13 @@ and_then() 使用包裹的值（wrapped value）调用其函数输入并返回�
 ```
 #![allow(dead_code)]
 
-#[derive(Debug)] enum Food { CordonBleu, Steak, Sushi }
+#[derive(Debug)] enum Food { Noodles, Steak, apple }
 #[derive(Debug)] enum Day { Monday, Tuesday, Wednesday }
 
-// 我们没有原材料（ingredient）来制作寿司。
+// 我们没有原材料（ingredient）来制作苹果。
 fn have_ingredients(food: Food) -> Option<Food> {
     match food {
-        Food::Sushi => None,
+        Food::apple => None,
         _           => Some(food),
     }
 }
@@ -160,14 +159,13 @@ fn have_ingredients(food: Food) -> Option<Food> {
 // 我们拥有全部食物的食谱，除了欠缺高超的烹饪手艺。
 fn have_recipe(food: Food) -> Option<Food> {
     match food {
-        Food::CordonBleu => None,
+        Food::Noodles => None,
         _                => Some(food),
     }
 }
 
 // 做一份好菜，我们需要原材料和食谱这两者。
-// 我们可以借助一系列 `match` 来表达相应的逻辑：
-// （原文：We can represent the logic with a chain of `match`es:）
+// 借助一系列 `match` 来表达相应的逻辑：
 fn cookable_v1(food: Food) -> Option<Food> {
     match have_ingredients(food) {
         None       => None,
@@ -190,12 +188,15 @@ fn eat(food: Food, day: Day) {
     }
 }
 
-fn main() {
-    let (cordon_bleu, steak, sushi) = (Food::CordonBleu, Food::Steak, Food::Sushi);
+//cookable_v2() 会产生一个 Option<Food>。使用 map() 替代 and_then() 将会得到 Option<Option<Food>>，对 eat() 来说是一个无效类型。
 
-    eat(cordon_bleu, Day::Monday);
+fn main() {
+    //定义一个三元组
+    let (Noodles, steak, apple) = (Food::Noodles, Food::Steak, Food::apple);
+
+    eat(Noodles, Day::Monday);
     eat(steak, Day::Tuesday);
-    eat(sushi, Day::Wednesday);
+    eat(apple, Day::Wednesday);
 }
 ```
 
