@@ -4,10 +4,6 @@ rust 学习网址 https://www.runoob.com/rust/rust-basic-syntax.html
 
 redox 参考文档 https://www.redox-os.org/zh/docs/
 
-## rust语法学习
-
-Rust相关语法
-
 ## Rust相关语法
 
 1. Rust的组织管理
@@ -70,6 +66,138 @@ Rust相关语法
         }
   
       }
+
+
+## 组合算子
+
+match是处理Option的一个有效的方法，但是这个方法对于很多用例都比较繁琐（操作只有一个有效输入时)，由此引入组合算子(combinator）以模块化的方式来管理控制流
+
+- map
+Option中有一个内置方法map(),这个组合算子可以简单映射some->some，none->none的情况。多个不同的map调用可以更加灵活地链式连接在一起。
+```
+#![allow(dead_code)]
+
+#[derive(Debug)] enum Food { Apple, Carrot, Potato }
+
+#[derive(Debug)] struct Peeled(Food);
+#[derive(Debug)] struct Chopped(Food);
+#[derive(Debug)] struct Cooked(Food);
+
+// 削水果皮。如果没有水果，就返回 `None`。
+// 否则返回削好皮的水果。
+fn peel(food: Option<Food>) -> Option<Peeled> {
+    match food {
+        Some(food) => Some(Peeled(food)),
+        None       => None,
+    }
+}
+
+// 和上面一样，我们要在切水果之前确认水果是否已经削皮。
+fn chop(peeled: Option<Peeled>) -> Option<Chopped> {
+    match peeled {
+        Some(Peeled(food)) => Some(Chopped(food)),
+        None               => None,
+    }
+}
+
+// 和前面的检查类似，但是使用 `map()` 来替代 `match`。
+fn cook(chopped: Option<Chopped>) -> Option<Cooked> {
+    chopped.map(|Chopped(food)| Cooked(food))
+}
+
+// 另外一种实现，我们可以链式调用 `map()` 来简化上述的流程。
+fn process(food: Option<Food>) -> Option<Cooked> {
+    food.map(|f| Peeled(f))
+        .map(|Peeled(f)| Chopped(f))
+        .map(|Chopped(f)| Cooked(f))
+}
+
+// 在尝试吃水果之前确认水果是否存在是非常重要的！
+fn eat(food: Option<Cooked>) {
+    match food {
+        Some(food) => println!("Mmm. I love {:?}", food),
+        None       => println!("Oh no! It wasn't edible."),
+    }
+}
+
+fn main() {
+    let apple = Some(Food::Apple);
+    let carrot = Some(Food::Carrot);
+    let potato = None;
+
+    let cooked_apple = cook(chop(peel(apple)));
+    let cooked_carrot = cook(chop(peel(carrot)));
+    // 现在让我们试试更简便的方式 `process()`。
+    // （原文：Let's try the simpler looking `process()` now.）
+    // （翻译疑问：looking 是什么意思呢？望指教。）
+    let cooked_potato = process(potato);
+
+    eat(cooked_apple);
+    eat(cooked_carrot);
+    eat(cooked_potato);
+```
+
+- and_then
+
+多层map链式调用比较复杂，引入and_then语句
+
+and_then() 使用包裹的值（wrapped value）调用其函数输入并返回结果。 如果 Option 是 None，那么它返回 None。
+
+```
+#![allow(dead_code)]
+
+#[derive(Debug)] enum Food { CordonBleu, Steak, Sushi }
+#[derive(Debug)] enum Day { Monday, Tuesday, Wednesday }
+
+// 我们没有原材料（ingredient）来制作寿司。
+fn have_ingredients(food: Food) -> Option<Food> {
+    match food {
+        Food::Sushi => None,
+        _           => Some(food),
+    }
+}
+
+// 我们拥有全部食物的食谱，除了欠缺高超的烹饪手艺。
+fn have_recipe(food: Food) -> Option<Food> {
+    match food {
+        Food::CordonBleu => None,
+        _                => Some(food),
+    }
+}
+
+// 做一份好菜，我们需要原材料和食谱这两者。
+// 我们可以借助一系列 `match` 来表达相应的逻辑：
+// （原文：We can represent the logic with a chain of `match`es:）
+fn cookable_v1(food: Food) -> Option<Food> {
+    match have_ingredients(food) {
+        None       => None,
+        Some(food) => match have_recipe(food) {
+            None       => None,
+            Some(food) => Some(food),
+        },
+    }
+}
+
+// 这可以使用 `and_then()` 方便重写出更紧凑的代码：
+fn cookable_v2(food: Food) -> Option<Food> {
+    have_ingredients(food).and_then(have_recipe)
+}
+
+fn eat(food: Food, day: Day) {
+    match cookable_v2(food) {
+        Some(food) => println!("Yay! On {:?} we get to eat {:?}.", day, food),
+        None       => println!("Oh no. We don't get to eat on {:?}?", day),
+    }
+}
+
+fn main() {
+    let (cordon_bleu, steak, sushi) = (Food::CordonBleu, Food::Steak, Food::Sushi);
+
+    eat(cordon_bleu, Day::Monday);
+    eat(steak, Day::Tuesday);
+    eat(sushi, Day::Wednesday);
+}
+```
 
 
 
