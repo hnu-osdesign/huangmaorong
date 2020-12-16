@@ -158,7 +158,7 @@ and_then() 使用包裹的值（wrapped value）调用其函数输入并返回�
 #[derive(Debug)] enum Food { Noodles, Steak, apple }
 #[derive(Debug)] enum Day { Monday, Tuesday, Wednesday }
 
-// 我们没有原材料（ingredient）来制作苹果。
+// 我们没有苹果（ingredient）来制作苹果派，(有其他原材料)
 fn have_ingredients(food: Food) -> Option<Food> {
     match food {
         Food::apple => None,
@@ -166,7 +166,7 @@ fn have_ingredients(food: Food) -> Option<Food> {
     }
 }
 
-// 我们拥有全部食物的食谱，除了欠缺高超的烹饪手艺。
+// 我们拥有全部食物的食谱，除了面条
 fn have_recipe(food: Food) -> Option<Food> {
     match food {
         Food::Noodles => None,
@@ -186,7 +186,7 @@ fn cookable_v1(food: Food) -> Option<Food> {
     }
 }
 
-// 这可以使用 `and_then()` 方便重写出更紧凑的代码：
+// 可以使用 `and_then()` 方便重写出更紧凑的代码：
 fn cookable_v2(food: Food) -> Option<Food> {
     have_ingredients(food).and_then(have_recipe)
 }
