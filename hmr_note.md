@@ -70,9 +70,19 @@ redox 参考文档 https://www.redox-os.org/zh/docs/
 
 ## 组合算子
 
+相关知识
+
+一般来说程序失败，rust会使用panic处理，而对于可能不存在的情况，则使用标准库std里面的option<T>的枚举类型。option<T>用于不存在的可能性的情况，表现为以下两种形式
+
+- Smoe(T):找到一个属于T类型的元素
+- None:找不到相应元素
+
+这两个选项可以通过match(类似于switch)显示进行处理,也可以使用unwrap隐式地进行处理。隐式处理要么返回 Some 内部的元素，要么就 panic。
+
 match是处理Option的一个有效的方法，但是这个方法对于很多用例都比较繁琐（操作只有一个有效输入时)，由此引入组合算子(combinator）以模块化的方式来管理控制流
 
 - map
+
 Option中有一个内置方法map(),这个组合算子可以简单映射some->some，none->none的情况。多个不同的map调用可以更加灵活地链式连接在一起。
 ```
 #![allow(dead_code)]
