@@ -3,7 +3,7 @@
 
 x86体系结构下的地址，64位模式下使用4级页表。地址位有48位，高16位为符号扩展位。
 
-![Alt text](huangmaorong/picture/虚拟地址.png "optional title")
+![Alt text](pictrue/虚拟地址.png "optional title")
 
 ### 基本分页模块 /paging/mod.rs
 ```
