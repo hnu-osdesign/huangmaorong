@@ -49,7 +49,7 @@ impl<L> Index<usize> for Table<L> where L: TableLevel {
 例如："循环"一次来访问 P1 表
 选择指向 P4 表本身的第 511 个 P4 条目，P4 表用作 P3 表。同样，P3 表用作 P2 表，P2 表被视为 P1 表。因此，P1 表将成为目标页，可以通过偏移量访问。
 
-![Alt text](picture/递归映射.png "optional title")
+![Alt text](pictrue/递归映射.jpg "optional title")
 
 实现
 |表|地址||
