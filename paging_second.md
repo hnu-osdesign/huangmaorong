@@ -194,3 +194,21 @@ pub struct TemporaryPage {
 ![Alt text](pictrue\递归映射指向非活动表.jpg "optional title")
 
 现在，可以完全像活动表一样访问非活动表，即使是神奇的地址也是一样的。这允许我们使用接口和现有的映射方法为非活动表， 太.请注意，除了递归映射之外，其他所有内容都继续完全像以前一样工作，因为我们从来没有更改过 CPU 中的活动表。
+
+
+切换页表
+实现思路比较简单：需要用新的 P4 帧的物理地址重新加载寄存器CR3
+```
+//切换页表 ，重新加载CR3寄存器中的地址
+    pub fn switch(&mut self, new_table: InactivePageTable) -> InactivePageTable {
+        let old_table = InactivePageTable {
+            p4_frame: Frame::containing_address(PhysicalAddress::new(
+                unsafe { controlregs::cr3() } as usize,
+            )),
+        };
+        unsafe {
+            controlregs::cr3_write(new_table.p4_frame.start_address().get() as u64);//重新CR3寄存器中的内容
+        }
+        old_table
+    }
+```
