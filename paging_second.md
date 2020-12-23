@@ -137,20 +137,52 @@ fn p1_index(&self) -> usize {
 ```
 建立页到帧的映射关系
 ```
-pub fn map_to(&mut self, page: Page, frame: Frame, flags: EntryFlags) -> MapperFlush {
+ pub fn map_to(&mut self, page: Page, frame: Frame, flags: EntryFlags) -> MapperFlush {
         let p3 = self.p4_mut().next_table_create(page.p4_index());
         let p2 = p3.next_table_create(page.p3_index());
         let p1 = p2.next_table_create(page.p2_index());
-        //创建对应的页表
+
         assert!(p1[page.p1_index()].is_unused(),
             "{:X}: Set to {:X}: {:?}, requesting {:X}: {:?}",
             page.start_address().get(),
             p1[page.p1_index()].address().get(), p1[page.p1_index()].flags(),
             frame.start_address().get(), flags);
-        p1.increment_entry_count();
-        p1[page.p1_index()].set(frame, flags | EntryFlags::PRESENT);
+        p1.increment_entry_count();//增加页表条目数量
+        p1[page.p1_index()].set(frame, flags | EntryFlags::PRESENT);//设置present位，不设置对于映射页面没有意义
         MapperFlush::new(page)
     }
 ```
+找到一个空闲帧，为其建立其映射关系
+```
+ pub fn map(&mut self, page: Page, flags: EntryFlags) -> MapperFlush {
+        let frame = allocate_frames(1).expect("out of frames");//分配一个空闲帧
+        self.map_to(page, frame, flags)//为page和frame建立映射关系
+    }
+```
+
+### 临时映射 /paging/tempoary_page.rs
+
+
+```
+// src/memory/paging/mod.rs
+mod temporary_page;
+
+// src/memory/paging/temporary_page.rs
+
+use super::Page;
+
+pub struct TemporaryPage {
+    page: Page,
+}
+```
+添加方法去实现临时映射，并且不映射页
+
+
+添加一个函数来修改非活动页面表。通过该函数，我们将创建一个新的页面表层次结构，该层次结构使用 4KiB 页面正确映射内核。然后，我们将切换到新表以获得更安全的内核环境。
+
+- 实现目标：使用函数在新的页面表中正确映射内核部分
+- 非活动页表：和活动页表的区别在于是否被CPU使用
+
+
 
 
